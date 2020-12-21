@@ -28,7 +28,7 @@ class CECE:
         for curso in oferta:
             curso['detalle'] = self.get_detalle(curso['id'])
 
-        with open(f"files/detallados/{uuid.uuid1()}.json", "w", encoding='utf-8') as f:
+        with open(f"files/{uuid.uuid1()}.json", "w", encoding='utf-8') as f:
             json.dump(oferta, f, ensure_ascii=False)
 
     def get_detalle(self, curso_id):
