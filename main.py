@@ -4,10 +4,12 @@ import json
 import uuid
 import re
 from bs4 import BeautifulSoup
+from requests.sessions import default_headers
 
 class CECE:
     def __init__(self, conf):
         self.url = conf['BaseURL']
+        self.login = conf['LoginURL']
         self.auth_url = conf['AuthURL']
         self.curso_detalle_url = conf['DetalleCursoURL']
         self.cursos_url = conf['CursosURL']
@@ -17,14 +19,24 @@ class CECE:
     def auth(self):
         try:
             self.session = requests.Session()
-            self.session.post(self.url, data={"usuario2": self.user, "clave2": self.pw})
-            self.session.post(self.auth_url)
+            self.session.headers = {
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Accept': '*/*',
+                'Host': 'www.cece.org'
+            }
+
+            # Abrir la conexion y obtener la cookie inicial
+            self.session.get(self.login)
+            # Autenticacion
+            self.session.post(self.auth_url, data={"usuario2": self.user, "clave2": self.pw})
         except Exception as e:
             print(e)
     
     def get_cursos(self):
-        res = self.session.get(self.cursos_url)
+        res = self.session.get(self.cursos_url, headers={'Content-Type': 'application/json'})
         oferta = json.loads(res.text)
+
         for curso in oferta:
             curso['detalle'] = self.get_detalle(curso['id'])
 
@@ -32,9 +44,7 @@ class CECE:
             json.dump(oferta, f, ensure_ascii=False)
 
     def get_detalle(self, curso_id):
-        res = self.session.post(self.curso_detalle_url, data={
-            "id_nro": curso_id
-        })
+        res = self.session.post(self.curso_detalle_url, data={'id_nro': curso_id})
         detalle = CECE.limpiar_detalle(res.content.decode('utf-8'))
         return detalle
     
