@@ -57,7 +57,7 @@ class CECE:
 
         with open(f"files/{uuid.uuid1()}.json", "w", encoding='utf-8') as f:
             self.logger.info(f"Guardando oferta en '{f.name}'")
-            json.dump(oferta, f, ensure_ascii=False)
+            json.dump(oferta, f, ensure_ascii=False, sort_keys=True, indent=2)
 
     def get_detalle(self, curso_id):
         res = self.session.post(self.curso_detalle_url,
