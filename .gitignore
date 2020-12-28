@@ -3,3 +3,4 @@ venv/
 config.ini
 cece.log
 files
+__pycache__

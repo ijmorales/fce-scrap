@@ -4,6 +4,8 @@ import json
 import uuid
 import re
 import logging
+import os
+import helpers
 from bs4 import BeautifulSoup
 from requests.sessions import default_headers
 
@@ -53,11 +55,13 @@ class CECE:
         self.logger.info("Trayendo detalles")
 
         for curso in oferta:
-            curso['detalle'] = self.get_detalle(curso['id'])
+            try:
+                curso['detalle'] = self.get_detalle(curso['id'])
+                helpers.strip_strings(curso)
+            except Exception as e:
+                self.logger.error(e)
 
-        with open(f"files/{uuid.uuid1()}.json", "w", encoding='utf-8') as f:
-            self.logger.info(f"Guardando oferta en '{f.name}'")
-            json.dump(oferta, f, ensure_ascii=False, sort_keys=True, indent=2)
+        return oferta
 
     def get_detalle(self, curso_id):
         res = self.session.post(self.curso_detalle_url,
@@ -67,7 +71,7 @@ class CECE:
 
     def limpiar_detalle(content):
         placeholders = {
-            "corte": "Corte de Rank. y Reg. 2020:",
+            "corte": "Corte.+?(?:<\/b>)(.+?(?=\\n))",
             "estadisticas": "Estadisticas:",
             "puntaje": "Puntaje:",
             "opinion": "Opinion:",
@@ -77,7 +81,6 @@ class CECE:
 
         splitted = re.split(placeholders['opinion'], content)
         datos = splitted[0]
-        matches = re.findall("(<img.+?\/>:)(.+?)(?=<)", splitted[1])
         comentarios = [match[1].strip() for match in re.findall(
             "(<img.+?\/>:)(.+?)(?=<)", splitted[1])]
 
@@ -92,9 +95,16 @@ class CECE:
             "reprobados": int(stats[6].b.string)
         } if stats else None
 
+        corte = helpers.regex_search_value(
+            '(Min\. Ranking:)(.+?(?:<b>))(\w{3})', content, 2)
+        maxRegistro = helpers.regex_search_value(
+            '(Max\. Registro:)(.+?(?:<b>))(\w{6})', content, 2)
+
         detalle = {
             "comentarios": comentarios,
-            "estadisticas": estadisticas
+            "estadisticas": estadisticas,
+            "corte": int(corte) if corte is not None else None,
+            "maxRegistro": int(maxRegistro) if maxRegistro is not None else None
         }
 
         return detalle
@@ -111,7 +121,11 @@ def main():
     appLogger = logging.getLogger("FetchCECE")
     cece = CECE(config['DEFAULT'], logger=appLogger)
     cece.auth()
-    cursos = cece.get_cursos()
+    oferta = cece.get_cursos()
+
+    with open(os.path.join(config['DEFAULT']['SaveFolder'], f"{uuid.uuid1()}.json"), "w", encoding='utf-8') as f:
+        appLogger.info(f"Guardando oferta en '{f.name}'")
+        json.dump(oferta, f, ensure_ascii=False, sort_keys=True, indent=2)
 
 
 if __name__ == "__main__":
