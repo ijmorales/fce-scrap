@@ -7,7 +7,7 @@ def strip_strings(value):
     if isinstance(value, dict):
         for key in value.keys():
             value[key] = strip_strings(value[key])
-        return value
+    return value
 
 
 def regex_search_value(pattern, string, groupNumber=0):
@@ -16,3 +16,15 @@ def regex_search_value(pattern, string, groupNumber=0):
         return result.groups()[groupNumber]
     else:
         return None
+
+
+def get_dia_completo(abreviatura):
+    abreviatura = abreviatura.lower()
+    switcher = {
+        "lu": "lunes",
+        "ma": "martes",
+        "mi": "miercoles",
+        "ju": "jueves",
+        "vi": "viernes"
+    }
+    return switcher.get(abreviatura)

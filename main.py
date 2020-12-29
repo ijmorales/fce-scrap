@@ -56,6 +56,10 @@ class CECE:
 
         for curso in oferta:
             try:
+                if curso['horario']:
+                    curso['diasHorario'] = {helpers.get_dia_completo(
+                        dia): curso['horario'] for dia in re.split(r"\\", curso['dias'])}
+
                 curso['detalle'] = self.get_detalle(curso['id'])
                 helpers.strip_strings(curso)
             except Exception as e:
@@ -84,16 +88,20 @@ class CECE:
         comentarios = [match[1].strip() for match in re.findall(
             "(<img.+?\/>:)(.+?)(?=<)", splitted[1])]
 
-        stats = BeautifulSoup(datos, 'lxml').find_all('td')
-        estadisticas = {
-            "anio": int(stats[0].string.strip()),
-            "cuatrimestre": int(stats[1].string.strip()),
-            "inscriptos": int(stats[2].b.string),
-            "ausentes": int(stats[3].b.string),
-            "aprobados": int(stats[4].b.string),
-            "regularizados": int(stats[5].b.string),
-            "reprobados": int(stats[6].b.string)
-        } if stats else None
+        stats_row = BeautifulSoup(datos, 'lxml').find_all('tr')
+        estadisticas = []
+        for row in stats_row:
+            stats = row.find_all('td')
+            if stats:
+                estadisticas.append({
+                    "anio": int(stats[0].string.strip()),
+                    "cuatrimestre": int(stats[1].string.strip()),
+                    "inscriptos": int(stats[2].b.string),
+                    "ausentes": int(stats[3].b.string),
+                    "aprobados": int(stats[4].b.string),
+                    "regularizados": int(stats[5].b.string),
+                    "reprobados": int(stats[6].b.string),
+                })
 
         corte = helpers.regex_search_value(
             '(Min\. Ranking:)(.+?(?:<b>))(\w{3})', content, 2)
@@ -104,10 +112,23 @@ class CECE:
             "comentarios": comentarios,
             "estadisticas": estadisticas,
             "corte": int(corte) if corte is not None else None,
-            "maxRegistro": int(maxRegistro) if maxRegistro is not None else None
+            "maxRegistro": int(maxRegistro) if maxRegistro is not None else None,
+            "porcentajeAprobados": CECE.calcular_porcentaje_aprobados(estadisticas)
         }
 
         return detalle
+
+    def calcular_porcentaje_aprobados(estadisticas):
+        aprobados = 0
+        inscriptos = 0
+        for estadistica in estadisticas:
+            aprobados += estadistica['aprobados']
+            inscriptos += estadistica['inscriptos']
+        if aprobados == 0:
+            return None
+        elif inscriptos == 0:
+            return None
+        return round(aprobados / inscriptos, 2)
 
 
 def main():
@@ -122,10 +143,11 @@ def main():
     cece = CECE(config['DEFAULT'], logger=appLogger)
     cece.auth()
     oferta = cece.get_cursos()
+    appLogger.info(f"{len(oferta)} cursos extraidos")
 
     with open(os.path.join(config['DEFAULT']['SaveFolder'], f"{uuid.uuid1()}.json"), "w", encoding='utf-8') as f:
         appLogger.info(f"Guardando oferta en '{f.name}'")
-        json.dump(oferta, f, ensure_ascii=False, sort_keys=True, indent=2)
+        json.dump(oferta, f, ensure_ascii=False, indent=2)
 
 
 if __name__ == "__main__":
