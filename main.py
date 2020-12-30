@@ -8,6 +8,9 @@ import os
 import helpers
 from bs4 import BeautifulSoup
 from requests.sessions import default_headers
+from classes.CampoEstadisticas import CampoEstadisticas
+from classes.CampoComentarios import CampoComentarios
+from classes.CampoRegex import CampoRegex
 
 
 class CECE:
@@ -78,35 +81,12 @@ class CECE:
             "corte": "Corte.+?(?:<\/b>)(.+?(?=\\n))",
             "estadisticas": "Estadisticas:",
             "puntaje": "Puntaje:",
-            "opinion": "Opinion:",
-            "img_opinion": '<img width=16 height=16 src="/cece2013/img/sistema/usuario-1.png"/>',
         }
-        max_usuario = 7
 
-        splitted = re.split(placeholders['opinion'], content)
-        datos = splitted[0]
-        comentarios = [match[1].strip() for match in re.findall(
-            "(<img.+?\/>:)(.+?)(?=<)", splitted[1])]
-
-        stats_row = BeautifulSoup(datos, 'lxml').find_all('tr')
-        estadisticas = []
-        for row in stats_row:
-            stats = row.find_all('td')
-            if stats:
-                estadisticas.append({
-                    "anio": int(stats[0].string.strip()),
-                    "cuatrimestre": int(stats[1].string.strip()),
-                    "inscriptos": int(stats[2].b.string),
-                    "ausentes": int(stats[3].b.string),
-                    "aprobados": int(stats[4].b.string),
-                    "regularizados": int(stats[5].b.string),
-                    "reprobados": int(stats[6].b.string),
-                })
-
-        corte = helpers.regex_search_value(
-            '(Min\. Ranking:)(.+?(?:<b>))(\w{3})', content, 2)
-        maxRegistro = helpers.regex_search_value(
-            '(Max\. Registro:)(.+?(?:<b>))(\w{6})', content, 2)
+        estadisticas = CampoEstadisticas(content).toValue()
+        comentarios = CampoComentarios(content).toValue()
+        corte = CampoRegex(value=content, pattern='(Min\. Ranking:)(.+?(?:<b>))(\w{3})', groupNumber=2).toValue()
+        maxRegistro = CampoRegex(value=content, pattern='(Max\. Registro:)(.+?(?:<b>))(\w{6})', groupNumber=2).toValue()
 
         detalle = {
             "comentarios": comentarios,
@@ -136,7 +116,8 @@ def main():
     config.read('config.ini')
     logging.basicConfig(filename="cece.log",
                         format='%(asctime)s: %(levelname)s - %(message)s',
-                        level=logging.INFO
+                        level=logging.INFO,
+                        filemode="w"
                         )
     appLogger = logging.getLogger("FetchCECE")
     cece = CECE(config['DEFAULT'], logger=appLogger)
@@ -149,7 +130,7 @@ def main():
     # Chequea que exista la carpeta de guardado, sino la crea
     if not os.path.isdir(config['DEFAULT']['SaveFolder']):
         os.mkdir(config['DEFAULT']['SaveFolder'])
-        
+
     with open(os.path.join(config['DEFAULT']['SaveFolder'], filename), "w", encoding='utf-8') as f:
         appLogger.info(f"Guardando oferta en '{f.name}'")
         json.dump(oferta, f, ensure_ascii=False, indent=2)
