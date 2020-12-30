@@ -135,7 +135,6 @@ def main():
     config = configparser.ConfigParser()
     config.read('config.ini')
     logging.basicConfig(filename="cece.log",
-                        encoding='utf-8',
                         format='%(asctime)s: %(levelname)s - %(message)s',
                         level=logging.INFO
                         )
@@ -145,7 +144,13 @@ def main():
     oferta = cece.get_cursos()
     appLogger.info(f"{len(oferta)} cursos extraidos")
 
-    with open(os.path.join(config['DEFAULT']['SaveFolder'], f"{uuid.uuid1()}.json"), "w", encoding='utf-8') as f:
+    filename = config['DEFAULT']['Filename'] if config['DEFAULT']['Filename'] else uuid.uuid()
+
+    # Chequea que exista la carpeta de guardado, sino la crea
+    if not os.path.isdir(config['DEFAULT']['SaveFolder']):
+        os.mkdir(config['DEFAULT']['SaveFolder'])
+        
+    with open(os.path.join(config['DEFAULT']['SaveFolder'], filename), "w", encoding='utf-8') as f:
         appLogger.info(f"Guardando oferta en '{f.name}'")
         json.dump(oferta, f, ensure_ascii=False, indent=2)
 
