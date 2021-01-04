@@ -125,7 +125,7 @@ def main():
     oferta = cece.get_cursos()
     appLogger.info(f"{len(oferta)} cursos extraidos")
 
-    filename = config['DEFAULT']['Filename'] if config['DEFAULT']['Filename'] else uuid.uuid()
+    filename = config['DEFAULT']['Filename'] if config['DEFAULT']['Filename'] else f"{uuid.uuid1()}.json"
 
     # Chequea que exista la carpeta de guardado, sino la crea
     if not os.path.isdir(config['DEFAULT']['SaveFolder']):

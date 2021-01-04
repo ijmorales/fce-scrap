@@ -1,4 +1,4 @@
-import re
+import regex as re
 from classes.Campo import Campo
 
 
@@ -12,11 +12,17 @@ class CampoComentarios(Campo):
             return self.parseFromHTML()
 
     def parseFromHTML(self):
-        placeholders = {
+        patterns = {
             "opinion": "Opinion:",
-            "img_opinion": '<img width=16 height=16 src="/cece2013/img/sistema/usuario-1.png"/>',
+            "year": "<br>(\d{4})<br>"
         }
-        splitted = re.split(placeholders['opinion'], self._value)
-        comentarios = [match[1].strip() for match in re.findall(
-            "(<img.+?\/>:)(.+?)(?=<)", splitted[1])]
+        years = [match for match in re.findall(patterns['year'], self._value)]
+        comentarios_by_year = re.split(patterns['year'], self._value)
+        comentarios = {}
+
+        for year in years:
+            year_idx = comentarios_by_year.index(year)
+            comentarios[year] = [match.strip() for match in re.findall("(?<=<img.+?\/>:)[^<]+", comentarios_by_year[year_idx + 1])]
+
         return comentarios
+
