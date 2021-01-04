@@ -9,12 +9,13 @@ def strip_strings(value):
             value[key] = strip_strings(value[key])
     return value
 
+
 def get_dia_completo(abreviatura):
     abreviatura = abreviatura.lower()
     switcher = {
         "lu": "lunes",
         "ma": "martes",
-        "mi": "miercoles",
+        "mi": "miércoles",
         "ju": "jueves",
         "vi": "viernes"
     }

@@ -11,6 +11,7 @@ from requests.sessions import default_headers
 from classes.CampoEstadisticas import CampoEstadisticas
 from classes.CampoComentarios import CampoComentarios
 from classes.CampoRegex import CampoRegex
+from classes.CampoHorario import CampoHorario
 
 
 class CECE:
@@ -60,8 +61,8 @@ class CECE:
         for curso in oferta:
             try:
                 if curso['horario']:
-                    curso['diasHorario'] = {helpers.get_dia_completo(
-                        dia): curso['horario'] for dia in re.split(r"\\", curso['dias'])}
+                    curso['horario'] = CampoHorario(
+                        curso['horario'], curso['dias'], curso['sabado']).toValue()
 
                 curso['detalle'] = self.get_detalle(curso['id'])
                 helpers.strip_strings(curso)
@@ -85,8 +86,10 @@ class CECE:
 
         estadisticas = CampoEstadisticas(content).toValue()
         comentarios = CampoComentarios(content).toValue()
-        corte = CampoRegex(value=content, pattern='(Min\. Ranking:)(.+?(?:<b>))(\w{3})', groupNumber=2).toValue()
-        maxRegistro = CampoRegex(value=content, pattern='(Max\. Registro:)(.+?(?:<b>))(\w{6})', groupNumber=2).toValue()
+        corte = CampoRegex(
+            value=content, pattern='(Min\. Ranking:)(.+?(?:<b>))(\w{3})', groupNumber=2).toValue()
+        maxRegistro = CampoRegex(
+            value=content, pattern='(Max\. Registro:)(.+?(?:<b>))(\w{6})', groupNumber=2).toValue()
 
         detalle = {
             "comentarios": comentarios,
@@ -125,7 +128,8 @@ def main():
     oferta = cece.get_cursos()
     appLogger.info(f"{len(oferta)} cursos extraidos")
 
-    filename = config['DEFAULT']['Filename'] if config['DEFAULT']['Filename'] else f"{uuid.uuid1()}.json"
+    filename = config['DEFAULT']['Filename'] if config[
+        'DEFAULT']['Filename'] else f"{uuid.uuid1()}.json"
 
     # Chequea que exista la carpeta de guardado, sino la crea
     if not os.path.isdir(config['DEFAULT']['SaveFolder']):
