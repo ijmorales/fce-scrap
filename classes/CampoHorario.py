@@ -12,7 +12,10 @@ class CampoHorario(Campo):
 
     def toValue(self):
         dias = [get_dia_completo(abv) for abv in re.split(r"\\", self.dias)]
-        horario = [{'dia': dia, 'hora': self.horas} for dia in dias]
+        self.horas = re.search(
+            r"(\d{2}:\d{2}-\d{2}:\d{2})", self.horas).groups()[0]
+        horario = [{'dia': dia, 'hora': self.horas}
+                   for dia in dias if dia != None]
         if self.sabado:
             horario.append({'dia': 'sábado', 'hora': self.sabado})
 
