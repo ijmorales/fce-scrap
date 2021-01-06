@@ -64,8 +64,10 @@ class CECE:
                     curso['horario'] = CampoHorario(
                         curso['horario'], curso['dias'], curso['sabado']).toValue()
 
-                curso['detalle'] = self.get_detalle(curso['id'])
                 helpers.strip_strings(curso)
+                curso['id'] = int(curso['id'])
+                curso['detalle'] = self.get_detalle(curso['id'])
+                curso['docente'] = curso['docente'] if curso['docente'] != "" else None
             except Exception as e:
                 self.logger.error(e)
 
@@ -84,6 +86,8 @@ class CECE:
             "puntaje": "Puntaje:",
         }
 
+        puntaje = CampoRegex(
+            value=content, pattern='(Puntaje:)(.+?(?:\\n))(\d+?\.\d)', groupNumber=2).toValue()
         estadisticas = CampoEstadisticas(content).toValue()
         comentarios = CampoComentarios(content).toValue()
         corte = CampoRegex(
@@ -93,10 +97,11 @@ class CECE:
 
         detalle = {
             "comentarios": comentarios,
-            "estadisticas": estadisticas,
+            "estadisticas": estadisticas if len(estadisticas) > 0 else None,
             "corte": int(corte) if corte is not None else None,
             "maxRegistro": int(maxRegistro) if maxRegistro is not None else None,
-            "porcentajeAprobados": CECE.calcular_porcentaje_aprobados(estadisticas)
+            "porcentajeAprobados": CECE.calcular_porcentaje_aprobados(estadisticas),
+            "puntaje": float(puntaje) if puntaje else None
         }
 
         return detalle

@@ -7,7 +7,7 @@ class CampoRegex(Campo):
         super().__init__(value)
         self.pattern = pattern
         self.groupNumber = groupNumber
-    
+
     def toValue(self):
         return self.search()
 

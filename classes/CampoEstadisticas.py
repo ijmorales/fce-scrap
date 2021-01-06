@@ -1,6 +1,7 @@
 from classes.Campo import Campo
 from bs4 import BeautifulSoup
 
+
 class CampoEstadisticas(Campo):
     def __init__(self, value, contentIsHTML=True):
         super().__init__(value)
@@ -25,7 +26,5 @@ class CampoEstadisticas(Campo):
                     "regularizados": int(stats[5].b.string),
                     "reprobados": int(stats[6].b.string),
                 })
+
         return estadisticas
-
-
-
