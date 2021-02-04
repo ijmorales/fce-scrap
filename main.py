@@ -60,10 +60,8 @@ class CECE:
 
         for curso in oferta:
             try:
-                if curso['horario']:
-                    curso['horario'] = CampoHorario(
-                        curso['horario'], curso['dias'], curso['sabado']).toValue()
-
+                curso['horario'] = CampoHorario(
+                    curso['horario'], curso['dias'], curso['sabado']).toValue() if curso['horario'] else None
                 helpers.strip_strings(curso)
                 curso['id'] = int(curso['id'])
                 curso['detalle'] = self.get_detalle(curso['id'])
