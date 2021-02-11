@@ -12,6 +12,7 @@ from classes.CampoEstadisticas import CampoEstadisticas
 from classes.CampoComentarios import CampoComentarios
 from classes.CampoRegex import CampoRegex
 from classes.CampoHorario import CampoHorario
+from datetime import date
 
 
 class CECE:
@@ -138,9 +139,12 @@ def main():
     if not os.path.isdir(config['DEFAULT']['SaveFolder']):
         os.mkdir(config['DEFAULT']['SaveFolder'])
 
-    with open(os.path.join(config['DEFAULT']['SaveFolder'], filename), "w", encoding='utf-8') as f:
+    filePath = os.path.join(
+        config['DEFAULT']['SaveFolder'], f"{date.today().strftime('%d-%m-%Y')}_{filename}")
+    with open(filePath, "w", encoding='utf-8') as f:
         appLogger.info(f"Guardando oferta en '{f.name}'")
         json.dump(oferta, f, ensure_ascii=False, indent=2)
+        print(filePath)
 
 
 if __name__ == "__main__":
